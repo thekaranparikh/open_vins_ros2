@@ -142,6 +142,7 @@ ros2 launch ov_msckf subscribe.launch.py config:=euroc_mav
 ```
 Terminal 3:
 ```
+cd ~/workspace/ov_data
 ros2 bag play V1_01_easy
 ```
 As soon as you enter in terminal 3, go to Rviz and click reset and you will be able to see the image and path on your screen. <br>
