@@ -1,4 +1,5 @@
 ## OPEN-VINS Setup on a Laptop
+reference: https://docs.openvins.com/getting-started.html
 ## System Specs
 (It took approx 20-25GB Storage end to end) <br>
 WSL 2 <br>
