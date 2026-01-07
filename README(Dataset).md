@@ -115,6 +115,7 @@ or set it permanent:
 echo "source ~/workspace/catkin_ws_ov/install/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
+Dataset link: https://drive.google.com/drive/folders/1XcX9nC7HBMlpsYWIGpnYxgTe0FEVwv0p?usp=sharing <br>
 Now Downlaod the EuRoC MAV dataset and keep it in ~/workspace/ov_data. <br>
 Unzip it:
 ```
