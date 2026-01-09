@@ -270,32 +270,9 @@ For the Right Camera: Perform the same steps for the other file: nano ~/.ros/cam
 
 ## Create a "Stereo Launch" Script
 Instead of opening two terminals, create a Python launch file in our workspace. This ensures both cameras start with synchronized parameters. <br>
-Create the file: nano ~/ov_ws/stereo_launch.py
-```
-from launch import LaunchDescription
-from launch_ros.actions import Node
-
-def generate_launch_description():
-    common_params = {"width": 640, "height": 480, "format": "XRGB8888"}
-    
-    return LaunchDescription([
-        Node(
-            package='camera_ros',
-            executable='camera_node',
-            name='left_camera',
-            parameters=[common_params, {"camera": "/base/axi/pcie@120000/rp1/i2c@88000/imx219@10"}],
-            remappings=[("~/image_raw", "/left/image_raw"), ("~/camera_info", "/left/camera_info")]
-        ),
-        Node(
-            package='camera_ros',
-            executable='camera_node',
-            name='right_camera',
-            parameters=[common_params, {"camera": "/base/axi/pcie@120000/rp1/i2c@80000/imx219@10"}],
-            remappings=[("~/image_raw", "/right/image_raw"), ("~/camera_info", "/right/camera_info")]
-        )
-    ])
-```
-Now we can start your stereo rig easily:
+Create the file: nano ~/ov_ws/stereo_launch.py <br>
+You can find it in the github repo <br>
+runt it with:
 ```
 ros2 launch ~/ov_ws/stereo_launch.py
 ```
@@ -311,4 +288,63 @@ ros2 run rqt_image_view rqt_image_view
 ```
 Once the window opens, use the dropdown menu at the top left to switch between /left/image_raw and /right/image_raw.
 
+
+## Create a "imu_publisher" Script
+Create the file: nano ~/ov_ws/imu_publisher.py <br>
+You can find it in the github repo
+run it with:
+```
+python3 imu_publisher.py
+```
+check if its publishing:
+```
+ros2 topic list
+ros2 topic echo /imu
+```
+
 ## Calibration
+official documentation - https://docs.openvins.com/gs-calibration.html <br><br>
+There are three Calibrations:
+- Camera Intrinsic Calibration 
+- IMU Noise Calibration
+- Dynamic IMU-Camera Calibration
+
+Out of these three, we wont be doing IMU Noise calibration as it demands to take static videos of 20hour long. We will use the default values for our Waveshare Stereo IMX 219-83 Camera. <br> <br>
+You can find it as imu.yaml in the repo. <br><br>
+Add the aprilgrid.yaml file from this repo and change the values as per you april grid dimensions.
+1) Camera Intrinsic Calibration
+- Here either we can keep the April grid stationary or the camera stationary <br>
+Terminal 1:
+```
+ros2 launch ~/ov_ws/stereo_launch.py
+```
+Terminal 2: <br>
+To see the left camera
+```
+ros2 run rqt_image_view rqt_image_view
+```
+Terminal 3: <br>
+To see the right camera
+```
+ros2 run rqt_image_view rqt_image_view
+```
+Terminal 4: 
+```
+ros2 bag record /left/image_raw /right/image_raw -o static
+```
+After the ros2 bag is recorded click ctrl+c to end it. <br>
+Now to view the info:
+```
+ros2 bag info static
+```
+and to play the bag:
+```
+ros2 bag play static
+ros2 run rqt_image_view rqt_image_view #in another terminal to view the video
+```
+
+2) Dynamic IMU-Camera Calibration
+- Here we have to keep the april grid stationary and move the camera such that all the axis of the imu are excited.
+- As before, launch the stereo_launch.py and also imu__publisher.py in different terminals. 
+- Open rqt_image_view to see the live camera feed. 
+- Record a ros2 bag with /left/image_raw /right/image_raw and /imu
