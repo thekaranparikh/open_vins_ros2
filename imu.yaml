@@ -1,0 +1,8 @@
+# IMU parameters for Waveshare IMX219-83 (ICM20948)
+rostopic: /imu
+update_rate: 200.0 # Standard for ICM20948 on Pi
+
+accelerometer_noise_density: 0.0028     # [m/s^2/sqrt(Hz)] 
+accelerometer_random_walk: 0.00016      # [m/s^3/sqrt(Hz)]
+gyroscope_noise_density: 0.00014        # [rad/s/sqrt(Hz)]
+gyroscope_random_walk: 0.000015         # [rad/s^2/sqrt(Hz)]
