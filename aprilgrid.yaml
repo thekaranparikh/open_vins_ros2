@@ -1,0 +1,6 @@
+target_type: 'aprilgrid'
+tagCols: 6               # number of tags in width
+tagRows: 6               # number of tags in height
+tagSize: 0.029           # size of a side of the black square in meters
+tagSpacing: 0.25         # ratio of spacing between tags to tagSize
+tagFamily: 'tag36h11'    # standard family for 6x6 tags
