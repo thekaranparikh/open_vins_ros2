@@ -309,11 +309,11 @@ There are three Calibrations:
 - IMU Noise Calibration
 - Dynamic IMU-Camera Calibration
 
-Out of these three, we wont be doing IMU Noise calibration as it demands to take static videos of 20hour long. We will use the default values for our Waveshare Stereo IMX 219-83 Camera. <br> <br>
+Out of these three, we wont be doing IMU Noise calibration as it demands to take static videos of 20hour long using 'allan variance ros'. We will use the default values for our Waveshare Stereo IMX 219-83 Camera. <br> <br>
 You can find it as imu.yaml in the repo. <br><br>
 Add the aprilgrid.yaml file from this repo and change the values as per you april grid dimensions.
-1) Camera Intrinsic Calibration
-- Here either we can keep the April grid stationary or the camera stationary <br>
+1) How to record a rosbag?
+
 Terminal 1:
 ```
 ros2 launch ~/ov_ws/stereo_launch.py
@@ -342,9 +342,86 @@ and to play the bag:
 ros2 bag play static
 ros2 run rqt_image_view rqt_image_view #in another terminal to view the video
 ```
+2) Camera Intrinsic Calibration (Offline)
+- Here either we can keep the April grid stationary or the camera stationary <br>
+- Record a ros2 bag with /left/image_raw and /right/image_ros
+- Convert the mcap into .bag format
+  - To do this, we will have to make a virtual environement
+    ```
+    python3 -m venv ~/ros_tools_env
+    ```
+    activate it:
+    ```
+    source ~/ros_tools_env/bin/activate
+    ```
+    install the conversion tool:
+    ```
+    pip install --upgrade pip
+    pip install rosbags
+    ```
+    convert your .map to .bag:
+    ```
+    rosbags-convert <ROS2_FOLDER_NAME> --dst <NEW_FILE.bag>
+    ```
+    its done! deactivate the environment to come out:
+    ```
+    deactivate
+    ```
+Why did we need a virtual environment? <br>
+sometimes, we need different/older versions of the same software. to avaoid the dependencies problem and to keep the system clean, we use a virtual environemtn which acts as an isolation. we can at any point delete the environment as well.
 
+- Once you have the bag file ready, now you are ready for the next step.
+
+We will transfer the static.bag and aprilgrid.yaml files to our laptop or desktop for the calibration. <br>
+We have to do this because our laptop uses x86_64 architecture where as the raspberry pi uses ARM64 architecture. <br>
+Many of the pre-built Docker images for Kalibr (like the stereolabs/kalibr one we used) are only built for x86. Trying to run them on a Pi would result in an "Exec format error." <br>
+while we can compile it from source, but it is very difficult and hours-long process.
+
+- Once all the required files are on the laptop, we will start with building kalibr
+
+reference: https://github.com/ethz-asl/kalibr <br>
+i used ubuntu 20.04 from wsl for this <br>
+
+- install docker desktop on your system <br>
+  clone the repo and build it
+  ```
+  git clone https://github.com/ethz-asl/kalibr.git
+  cd kalibr
+  docker build -t kalibr -f Dockerfile_ros1_20_04 . #use sudo if it gives error
+  ```
+  create a dir named calibration_data where the .bag and .yaml files are kept <br>
+  launch the docker container:
+  ```
+  sudo docker run -it -v ~/swarm/calibration_data:/data kalibr
+  ```
+  source and run the calibration command:
+  ```
+  source /catkin_ws/devel/setup.bash
+  
+  rosrun kalibr kalibr_calibrate_cameras \
+    --bag /data/static.bag --target /data/aprilgrid.yaml \
+    --models pinhole-equi pinhole-equi \
+    --topics /left/image_raw /right/image_raw \
+    --bag-freq 10.0
+  ```
+if it says "Initialization of focal length failed. Provide manual initialization:" <br>
+Then enter 450. <br><br>
+You wont be able to see the live gui of the calibration if you are using wsl and docker. <br><br>
+after the calibration is complete, you will have 3 files in your directory:<br><br>
+static-results-cam.txt <br>
+static-report-cam.pdf <br>
+static-camchain.yaml <br><br>
+
+If you open the pdf and see the reprojection errors, it should be a gaussian destribution having less than < 0.2-0.5 pixel reprojection errors. <br>
+If you are planning on performing online calibration of the camera, then larger values might be acceptable (e.g. 1 pixel), but a more accurate offline calibration is always preferred.
+
+                                                                                        
+
+    
 2) Dynamic IMU-Camera Calibration
 - Here we have to keep the april grid stationary and move the camera such that all the axis of the imu are excited.
 - As before, launch the stereo_launch.py and also imu__publisher.py in different terminals. 
 - Open rqt_image_view to see the live camera feed. 
 - Record a ros2 bag with /left/image_raw /right/image_raw and /imu
+
+## 
